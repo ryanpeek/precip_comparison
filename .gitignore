@@ -1,15 +1,8 @@
-# History files
-.Rhistory
-.Rapp.history
-
-# Session Data files
-.RData
-
-# Example code in package build process
-*-Ex.R
-
 # RStudio files
 .Rproj.user/
+
+#
+.Rprofile
 
 # produced vignettes
 vignettes/*.html
@@ -17,3 +10,19 @@ vignettes/*.pdf
 
 # OAuth2 token, see https://github.com/hadley/httr/releases/tag/v0.3
 .httr-oauth
+.Rproj.user
+
+# History files
+.Rhistory
+.Rapp.history
+
+# project files
+.Rproj
+.DS_Store
+scripts/.DS_Store
+photos/
+
+# Example code in package build process
+*-Ex.R
+
+
