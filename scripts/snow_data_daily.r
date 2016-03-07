@@ -1,5 +1,5 @@
-##Download daily avg gage data from USGS and plot graphs for multiple years
-##by R Peek 02/23/15
+## GET SNOW DATA FROM CDEC STATIONS AND PLOT W BOXPLOT
+
 
 library(lattice)
 library(latticeExtra)
@@ -9,8 +9,8 @@ library(plyr)
 source(paste0(root, '/functions/getCDEC_snow.R'))
 
 # current data are:
-yr <- 2014
-mo <- 'Jan'
+yr <- 2016
+mo <- 'Feb'
 
 ## Typical CDEC web request:
 # http://cdec.water.ca.gov/cgi-progs/snowQuery?course_num=129&month=(All)&start_date=2010&end_date=2011&csv_mode=Y&data_wish=Retrieve+Data
@@ -19,7 +19,7 @@ mo <- 'Jan'
 course.list <- data.frame(course_number=c(129, 323, 131, 132, 134, 345, 344, 138, 139, 384, 140, 142, 143, 145, 152))
 
 # get historic data
-d.long_term <- ddply(course.list, .(course_number), .progress='text', getMonthly, start_yr=1900, end_yr=2015)
+d.long_term <- ddply(course.list, .(course_number), .progress='text', getMonthly, start_yr=1900, end_yr=2016)
 
 # get CURRENT data
 d.CURR <- ddply(course.list, .(course_number), .progress='text', getMonthly, start_yr=yr, end_yr=yr)
@@ -89,6 +89,7 @@ print(p4, more=FALSE, position=c(0.125,0,0.425,0.175))
 
 
 ## make a table summarising results
-file_name <- paste('tables/', mo, '_', yr, '.csv', sep='')
-new.order <- order(d.merged$watershed)
-write.csv(d.merged[new.order, c('course_number','watershed','course','elevation','Depth', 'pct_of_normal_Depth','SWE','pct_of_normal_SWE', 'density', 'pct_of_normal_density')], file=file_name, row.names=FALSE)
+file_name <- paste('data/tables/snow_cdec_', mo, '_', yr, '.csv', sep='')
+# new.order <- order(d.merged$watershed)
+write.csv(d.merged[, c('course_number','Depth', 'pct_of_normal_Depth','SWE','pct_of_normal_SWE', 'density', 'pct_of_normal_density')], file=file_name, row.names=FALSE)
+# write.csv(d.merged[new.order, c('course_number','watershed','course','elevation','Depth', 'pct_of_normal_Depth','SWE','pct_of_normal_SWE', 'density', 'pct_of_normal_density')], file=file_name, row.names=FALSE)

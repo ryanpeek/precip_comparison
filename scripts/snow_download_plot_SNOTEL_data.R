@@ -45,3 +45,6 @@ par(mfrow=c(2,2))															#creates a two by two plot matrix which is fille
 	lines(tmin)
 	lines(tmax)
 	lines(tmax)
+
+	
+	
