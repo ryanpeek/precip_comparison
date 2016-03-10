@@ -24,6 +24,8 @@ dav1 <- dav %>%
   group_by(Y, M, Station) %>% 
   filter(M==2) # limit to FEB 
 glimpse(dav1)
+dav1$decade <- cut(x = dav1$Y,include.lowest = T,dig.lab = 4, breaks = c(1980, 1990, 2000, 2010, 2020), labels = c('1980s','1990s','2000s','2010s'))
+
   
 dav2 <- dav %>% 
   select(datetime, Station, Precip:min.1, Y, M, DOY) %>% 
@@ -41,7 +43,9 @@ ppt <- dav %>%
             "maxPPT_mm"=max(Precip),
             "minPPT_mm"=min(Precip))
 
-glimpse(ppt)
+h(ppt)
+ppt$decade <- cut(x = ppt$Y,include.lowest = T,dig.lab = 4, breaks = c(1980, 1990, 2000, 2010, 2020), labels = c('1980s','1990s','2000s','2010s'))
+h(ppt)
 
 # precip in FEB
 ggplot(data = ppt, aes(x = as.factor(Y), y = avgPPT_mm, group=Y)) +
@@ -99,7 +103,7 @@ ggplot(data = dav2, aes(x = Y, y = avgAir.max, group=Station)) +
   geom_jitter(alpha = 0.3, color = "blue3") +
   geom_boxplot(fill="blue", alpha=0.7) + theme_bw()
 
-
+# air only for all but 2016, J-F-M
 dav %>% 
   select(Station, Precip:min.1, Y, M, DOY) %>% 
   group_by(M) %>% 
@@ -110,3 +114,16 @@ dav %>%
             "avgAirmax"=mean(Air.max),
             "avgAirmin"=mean(min)) %>% 
   as.data.frame()
+
+
+
+# do some stats by decade to look for changes in ppt
+library(coin) 
+h(ppt)
+h(dav1)
+
+# monte carlo sampling of precip vs decade using FEB only
+oneway_test(totPPT_mm ~ decade,data=ppt,distribution='approximate')
+
+# monte carlo sampling of Air.max vs decade using FEB only
+oneway_test(Air.max ~ decade,data=dav1[dav1$M==2,],distribution='approximate')
