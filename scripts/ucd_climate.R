@@ -43,9 +43,9 @@ ppt <- dav %>%
             "maxPPT_mm"=max(Precip),
             "minPPT_mm"=min(Precip))
 
-h(ppt)
+head(ppt)
 ppt$decade <- cut(x = ppt$Y,include.lowest = T,dig.lab = 4, breaks = c(1980, 1990, 2000, 2010, 2020), labels = c('1980s','1990s','2000s','2010s'))
-h(ppt)
+head(ppt)
 
 # precip in FEB
 ggplot(data = ppt, aes(x = as.factor(Y), y = avgPPT_mm, group=Y)) +
@@ -73,7 +73,7 @@ ggplot(data = ppt, aes(x = as.factor(Y), y = totPPT_mm, group=Y)) +
   annotate("text", x=as.factor(2008), y=290, size=2, label="Data Source: http://atm.ucdavis.edu/weather/")
 
 library(svglite) # much higher res and is vector scalable graphics
-ggsave(filename = "./plots/Feb_ppt_Davis_1981-2016.svg", width = 8, height=5, units = "in", dpi = 150)
+#ggsave(filename = "./plots/Feb_ppt_Davis_1981-2016.svg", width = 8, height=5, units = "in", dpi = 150)
 
 
 # airtemp in FEB
@@ -93,15 +93,8 @@ ggplot(data = dav1, aes(x = as.factor(Y), y = Air.max, group=Station)) +
   ggtitle(label = "February Air Temperature in Davis: 1981-2016") + 
   annotate("text", x=as.factor(2010), y=2, size=2, label="Data Source: http://atm.ucdavis.edu/weather/")
 
-library(svglite) # much higher res and is vector scalable graphics
-ggsave(filename = "./plots/Feb_airtemp_Davis_1981-2016.svg", width = 8, height=5, units = "in", dpi = 150)
-
+# ggsave(filename = "./plots/Feb_airtemp_Davis_1981-2016.svg", width = 8, height=5, units = "in", dpi = 150)
 # ggsave(filename = "./plots/Feb_airtemp_Davis_1981-2016.png", width = 6, height=5, units = "in", dpi = 150)
-
-# lumped
-ggplot(data = dav2, aes(x = Y, y = avgAir.max, group=Station)) +
-  geom_jitter(alpha = 0.3, color = "blue3") +
-  geom_boxplot(fill="blue", alpha=0.7) + theme_bw()
 
 # air only for all but 2016, J-F-M
 dav %>% 
@@ -119,8 +112,8 @@ dav %>%
 
 # do some stats by decade to look for changes in ppt
 library(coin) 
-h(ppt)
-h(dav1)
+head(ppt)
+head(dav1)
 
 # monte carlo sampling of precip vs decade using FEB only
 oneway_test(totPPT_mm ~ decade,data=ppt,distribution='approximate')

@@ -10,6 +10,7 @@
 #   MALAKOFF: MNVYC1
 #   NFY: Saddleback, CA Headwaters of Goodyear Ck: MSLEC1
 #   DAV: KCADAVIS24, KCADAVIS17
+#https://www.wunderground.com/weatherstation/WXDailyHistory.asp?ID=KCAANGEL4&month=5&day=1&year=2011&format=1
 
 wunder_daily <- function(station, date)
 {
@@ -18,7 +19,7 @@ wunder_daily <- function(station, date)
   if(!require(plyr)) { install.packages("plyr"); require(plyr)}
   
   # get base web address
-  base_url <- 'http://www.wunderground.com/weatherstation/WXDailyHistory.asp?'
+  base_url <- 'https://www.wunderground.com/weatherstation/WXDailyHistory.asp?'
 
   # parse date
   m <- as.integer(format(date, '%m'))

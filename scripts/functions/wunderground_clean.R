@@ -66,45 +66,45 @@ wunder_clean <- function(data,
   
   # SAVE DATA ---------------------------------------------------------------
   
-  if(!require(readr)) { install.packages("readr"); require(readr)}
-  
-  # set dir
-  locdir<-"./data/processed/wunderground"
-  cat("\n","Use current dir to save file or choose dir? current (y) or choose (n)?", "\n\n")
-  reply<-scan(what="character",n=1)
-  if(reply=="y"){
-    ### Set directory for saving to csv
-    cat("Using current working directory: \n", getwd(), "\n\n")
-  } else {
-    if(reply=="n"){
-      cat("Type path to directory you want save file: \n")
-      ldir<-scan(what="character",nlines = 1)
-      setwd(ldir)
-      cat("Working dir now: \n ", getwd(), "\n\n")
-    } else {
-      cat("Error: please only use 'n' or 'y'")
-    }
-  }
-
-  if(saveHrly){
-    write_csv(wdat.hr, path=paste0(getwd(),"/",station,"_",start,"-",end,"_hr.csv"))
-    #saveRDS(wdat, file=paste0("./data/processed/wunderground/",station,"_",start,"-",end,"_hr.rds"))
-    print(paste("Hourly data saved here: \n",getwd(),sep=""))
-  }
-  
-  
-  if(saveDaily){
-    write_csv(wdat.dy, path=paste0(getwd(),"/",station,"_",start,"-",end,"_dy.csv"))
-    #saveRDS(wdat, file=paste0("./data/processed/wunderground/",station,"_",start,"-",end,"_dy.rds"))
-    print(paste("Daily data saved here: \n",getwd(),sep=""))
-  }
-  
-  
-  if(saveALL){
-    write_csv(wdat, path=paste0(getwd(),"/",station,"_",start,"-",end,".csv"))
-    #saveRDS(wdat, file=paste0("./data/processed/wunderground/",station,"_",start,"-",end,".rds"))
-    print(paste("Full dataset saved here: \n",getwd(),sep=""))
-  }
+  # if(!require(readr)) { install.packages("readr"); require(readr)}
+  # 
+  # # set dir
+  # locdir<-"./data/processed/wunderground"
+  # cat("\n","Use current dir to save file or choose dir? current (y) or choose (n)?", "\n\n")
+  # reply<-scan(what="character",n=1)
+  # if(reply=="y"){
+  #   ### Set directory for saving to csv
+  #   cat("Using current working directory: \n", getwd(), "\n\n")
+  # } else {
+  #   if(reply=="n"){
+  #     cat("Type path to directory you want save file: \n")
+  #     ldir<-scan(what="character",nlines = 1)
+  #     setwd(ldir)
+  #     cat("Working dir now: \n ", getwd(), "\n\n")
+  #   } else {
+  #     cat("Error: please only use 'n' or 'y'")
+  #   }
+  # }
+  # 
+  # if(saveHrly){
+  #   write_csv(wdat.hr, path=paste0(getwd(),"/",station,"_",start,"-",end,"_hr.csv"))
+  #   #saveRDS(wdat, file=paste0("./data/processed/wunderground/",station,"_",start,"-",end,"_hr.rds"))
+  #   print(paste("Hourly data saved here: \n",getwd(),sep=""))
+  # }
+  # 
+  # 
+  # if(saveDaily){
+  #   write_csv(wdat.dy, path=paste0(getwd(),"/",station,"_",start,"-",end,"_dy.csv"))
+  #   #saveRDS(wdat, file=paste0("./data/processed/wunderground/",station,"_",start,"-",end,"_dy.rds"))
+  #   print(paste("Daily data saved here: \n",getwd(),sep=""))
+  # }
+  # 
+  # 
+  # if(saveALL){
+  #   write_csv(wdat, path=paste0(getwd(),"/",station,"_",start,"-",end,".csv"))
+  #   #saveRDS(wdat, file=paste0("./data/processed/wunderground/",station,"_",start,"-",end,".rds"))
+  #   print(paste("Full dataset saved here: \n",getwd(),sep=""))
+  # }
   
   # PLOTS -------------------------------------------------------------------
   if(!require(ggplot2)) { install.packages("ggplot2"); require(ggplot2)}

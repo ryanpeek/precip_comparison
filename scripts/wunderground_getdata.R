@@ -6,8 +6,8 @@
 
 # LOAD FUNCTIONS ----------------------------------------------------------
 
-source(paste0(root, "/functions/wunderground_daily.R")) # scrape data
-source(paste0(root, "/functions/wunderground_clean.R")) # clean data
+source("scripts/functions/wunderground_daily.R") # scrape data
+source("scripts/functions/wunderground_clean.R") # clean data
 
 # DEFINE STATIONS ---------------------------------------------------------
 
@@ -16,7 +16,7 @@ source(paste0(root, "/functions/wunderground_clean.R")) # clean data
 #   MFA: KCACOOL6
 #   MFY: KCAALLEG2
 #   RUB/RALSTON: KCAFORES14
-#   FORESTHILL: KCAFORES6, KCAFORES12, KCAFORES21, KCAFORES22
+#   FORESTHILL: KCAFORES6,KCAFORES9 (from 2008-Feb), KCAFORES12, KCAFORES21, KCAFORES22
 #   MALAKOFF: MNVYC1
 #   NFY: Saddleback, CA Headwaters of Goodyear Ck: MSLEC1
 #   STAN: MSPWC1  
@@ -25,20 +25,20 @@ source(paste0(root, "/functions/wunderground_clean.R")) # clean data
 # SCRAPE WUNDERGROUND DATA ------------------------------------------------
 site <- 'DAVIS'
 station<-'KCADAVIS17' # station name here
-start<-'2000-02-24' 
-end<-'2016-02-24'
+start<-'2013-01-01' 
+end<-'2016-11-15'
 
 # create vector of dates: daily
 date.range <- seq.Date(from=as.Date(start), to=as.Date(end), by='1 day')
 
 # create vector of dates: annually
-date.range <- seq.Date(from=as.Date(start), to=as.Date(end), by='1 year')
+#date.range <- seq.Date(from=as.Date(start), to=as.Date(end), by='1 year')
 
 # make a list based on the date.range
 l <- vector(mode='list', length=length(date.range)) # pre-allocate list
 
 # use wunderground_daily function to loop through dates
-for(i in seq_along(date.range)) {s
+for(i in seq_along(date.range)) {
   print(date.range[i])
   l[[i]] <- wunder_daily(station, date.range[i])
   l[[i]]$station <- station # add station
@@ -61,20 +61,16 @@ wunder_clean(data = l, # data
             )
 
 # save as RData file (can combine all three above into one .rda file)
-save(list = ls(pattern = "KCA*"), file = paste0("./data/processed/wunderground/",site,"_",station,"_2016.rda"))
-readr::write_rds(paste0(site,"_15"), path=paste0("./data/processed/wunderground/",site,"_",station, "_2016.rds"))
+save(list = ls(pattern = "KCA*"), file = paste0("data/wunderground/",site,"_",station,"_2016.rda"))
+readr::write_rds(paste0(site,"_15"), path=paste0("data/wunderground/",site,"_",station, "_2016.rds"))
 
 # remove values/files
 rm(l,i, start, end, date.range) 
 
-# ADD YDAY/WYDAY/WY
-source("./R/functions/doy.R")
 
-# make data frame for a site
-df<-as.data.frame(hrly2)
-colnames(df)[10]<-"wy"
-df<-add_WYD(df, 1)
-# filter to a site
-df.nfa<-filter(df, site=="NFA")
+# USING REVISED SCRIPT PLUS PURRR -----------------------------------------
 
-s(KCAGOLDR3_hr)
+library(purrr)
+
+rng <- map_df(seq(as.Date("2015-12-01"), as.Date("2015-12-04"), "1 day"),
+              function(x) { get_wx(wx_date=x) })
