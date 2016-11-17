@@ -1,5 +1,5 @@
 ## Pull Wunderground Data:
-## 2015-12-29 R. Peek
+## 2016-11-15 R. Peek
 
 # Set up function to pull data from wunderground at a sub hourly timestamp
 # aggregate to hourly or daily and plot/save data
@@ -22,55 +22,47 @@ source("scripts/functions/wunderground_clean.R") # clean data
 #   STAN: MSPWC1  
 #   DAVIS: KCADAVIS17 (slide hill park)
 
-# SCRAPE WUNDERGROUND DATA ------------------------------------------------
-site <- 'DAVIS'
-station<-'KCADAVIS17' # station name here
-start<-'2013-01-01' 
+# PICK STATION AND DATES --------------------------------------------------
+
+## These will be appended on to file names
+site <- 'RUB' # site name
+station<-'KCAFORES14' # station name here
+start<-'2016-11-05' # this took user: 87.844 system: 11.139 elapsed: 2565.785
 end<-'2016-11-15'
 
-# create vector of dates: daily
-date.range <- seq.Date(from=as.Date(start), to=as.Date(end), by='1 day')
+# SCRAPE WUNDERGROUND DATA ------------------------------------------------
 
-# create vector of dates: annually
-#date.range <- seq.Date(from=as.Date(start), to=as.Date(end), by='1 year')
+## Using `purrr` framework
+library(purrr, warn.conflicts = F)
+library(dplyr, warn.conflicts = F)
+library(lubridate, warn.conflicts = F)
 
-# make a list based on the date.range
-l <- vector(mode='list', length=length(date.range)) # pre-allocate list
+ptm <- proc.time() # total time to run
+wdat <- map_df(seq(as.Date(start), as.Date(end), "1 day"),
+              function(x) { wunder_daily(station = station, date = x) })
+proc.time() - ptm # total time that has elapsed
 
-# use wunderground_daily function to loop through dates
-for(i in seq_along(date.range)) {
-  print(date.range[i])
-  l[[i]] <- wunder_daily(station, date.range[i])
-  l[[i]]$station <- station # add station
-}
 
-### output is a list of dataframes, each frame is daily data
-### if you get "Error in `*tmp*`[[i]] : subscript out of bounds"
-### it just means there is not data available for a given day(s), script will
-### still run.
+# FOR LARGE FILES: Write Compressed Files ---------------------------------
+
+# write to a compressed file
+library(readr, warn.conflicts = F)
+readr::write_rds(x = wdat, path = paste0("data/wunderground/",site,"_",station,"_",start,".csv.xz"), compress="xz")
+
+wdat<-read_rds(path = "data/wunderground/RUB_KCAFORES14_2016-11-05.csv.xz")
 
 # WUNDER CLEAN & PLOT FUNCTION --------------------------------------------
 
-# use wunderground_clean function to combine list and clean data
-wunder_clean(data = l, # data
-             interval = 15, # minutes
-             saveHrly = FALSE, # save csv of hourly only
-             saveDaily = FALSE, # save csv of daily only
-             saveALL =  FALSE # save full dataset
+# use `wunder_clean`` function to combine list and clean data
+wunder_clean(data = wdat, # data
+             saveHrly = TRUE, # save csv of hourly only
+             saveDaily = TRUE, # save csv of daily only
+             save15 =  TRUE # save full dataset
              # default will still output all 3 to global environment
             )
 
 # save as RData file (can combine all three above into one .rda file)
-save(list = ls(pattern = "KCA*"), file = paste0("data/wunderground/",site,"_",station,"_2016.rda"))
-readr::write_rds(paste0(site,"_15"), path=paste0("data/wunderground/",site,"_",station, "_2016.rds"))
+save(list = ls(pattern = "KCA*"), file = paste0("data/wunderground/",site,"_",station,"_",start,".rda"), compress="xz")
 
 # remove values/files
 rm(l,i, start, end, date.range) 
-
-
-# USING REVISED SCRIPT PLUS PURRR -----------------------------------------
-
-library(purrr)
-
-rng <- map_df(seq(as.Date("2015-12-01"), as.Date("2015-12-04"), "1 day"),
-              function(x) { get_wx(wx_date=x) })

@@ -15,15 +15,22 @@ get_wx <- function(station="EKAH", sta_type="airport", wx_date=Sys.Date(), fmt="
     wx_date <- as.Date(wx_date, fmt)
   }
   
-  wx_base_url <- paste0("https://www.wunderground.com/history/", sta_type, "/%s/%s/DailyHistory.html")
-  wx_url <- sprintf(wx_base_url, station, format(wx_date, "%Y/%m/%d"))
+  if(sta_type=="airport"){
+    wx_base_url <- paste0("https://www.wunderground.com/history/", sta_type, "/%s/%s/DailyHistory.html") 
+    wx_url <- sprintf(wx_base_url, station, format(wx_date, "%Y/%m/%d"))
+  } else {
+    wx_base_url <- 'https://www.wunderground.com/weatherstation/WXDailyHistory.asp?%s%s%s%s'
+    wx_url <- sprintf(wx_base_url,'ID=',station, format(wx_date, "&month=%m&day=%d&year=%Y"), '&format=1')
+  }
   
   res <- httr::GET(wx_url, query=list(MR=1, format=1))
   dat <- httr::content(res, as="text")
-  
-  dat <- gsub("<br />", "", dat)
-  dat <- read.table(text=dat, sep=",", header=TRUE,
-                    na.strings=c("-", "N/A", "NA"), stringsAsFactors=FALSE)
+  dat <- as.data.frame(read_delim(dat, delim = ",", escape_backslash = T, trim_ws = T, skip = 1, na = c("-", "N/A", "NA")))
+  dat <- dat[-seq(2, nrow(dat), by=2),]
+  #dat <- gsub("\n", "", dat)
+  #dat <- gsub("<br />", "\\n", dat)
+  #dat <- read.table(text=dat, sep=",", header=TRUE,
+  #                  na.strings=c("-", "N/A", "NA"), stringsAsFactors=FALSE)
   
   # saner column names
   
@@ -32,13 +39,16 @@ get_wx <- function(station="EKAH", sta_type="airport", wx_date=Sys.Date(), fmt="
   # via http://stackoverflow.com/a/22528880/1457051
   cols <- gsub("([a-z])([A-Z])", "\\1_\\L\\2", cols, perl=TRUE)
   cols <- sub("^(_[a-z])", "\\L\\1", cols, perl=TRUE)
+  cols <- sub("<br>$", "", cols, perl=TRUE)
+  cols <- sub("(\\/)","_", cols, perl=TRUE)
+  cols <- sub("(\\^)","_", cols, perl=TRUE)
   cols <- tolower(gsub("\\.", "_", cols))
   
-  readr::type_convert(setNames(dat, cols)) # more robust than type.convert()
+  dat<-readr::type_convert(setNames(dat, cols)) # more robust than type.convert()
   
 }
 
-tdy <- get_wx()
+tdy <- get_wx(station = "KCAGROVE6", sta_type = "weatherstation")
 
 str(tdy)
 ## 'data.frame': 36 obs. of  14 variables:
@@ -58,7 +68,6 @@ str(tdy)
 ##  $ date_utc             : POSIXct, format: "2016-06-08 22:00:00" "2016-06-08 22:20:00" ...
 
 a_yr_ago <- get_wx(wx_date="2015-06-09")
-
-a_yr_ago <- get_wx(station = "KCADAVIS17", sta_type = "weatherstation", wx_date="2015-06-09")
-
 str(a_yr_ago)
+
+

@@ -12,21 +12,20 @@
 #   DAV: KCADAVIS24, KCADAVIS17
 #https://www.wunderground.com/weatherstation/WXDailyHistory.asp?ID=KCAANGEL4&month=5&day=1&year=2011&format=1
 
-wunder_daily <- function(station, date)
+wunder_daily <- function(site, station, date, save=FALSE)
 {
   
   # load packages
-  if(!require(plyr)) { install.packages("plyr"); require(plyr)}
+  if(!require(dplyr)) { install.packages("dplyr"); require(dplyr)}
+  if(!require(lubridate)) { install.packages("lubridate"); require(lubridate)}
   
   # get base web address
   base_url <- 'https://www.wunderground.com/weatherstation/WXDailyHistory.asp?'
 
   # parse date
-  m <- as.integer(format(date, '%m'))
-  d <- as.integer(format(date, '%d'))
-  y <- format(date, '%Y')
-  
-  STA<-station
+  m <- as.integer(month(date))
+  d <- as.integer(day(date))
+  y <- year(date)
   
   # compose final url
   final_url <- paste(base_url,
@@ -72,12 +71,33 @@ wunder_daily <- function(station, date)
     # remove UTC and software type columns
     the_data$DateUTC.br. <- NULL
     the_data$SoftwareType <- NULL
-        
+    
     # sort and fix rownames
     the_data <- the_data[order(the_data$Time), ]
     row.names(the_data) <- 1:nrow(the_data)
-
+    
+    # Add a station ID col and SITE
+    the_data$station <- station
+    the_data$site <- site
+    # add time zone
+    the_data$Time<-lubridate::with_tz(the_data$Time, tzone="America/Los_Angeles")
+    the_data$timesnap<-round_date(the_data$Time, unit = "15 mins") # to snap to nearest 15 min
+    the_data<-arrange(the_data, Time)
+    
     # done
     return(the_data)
   }
+  
+  d1<-paste0(site,"_",station)
+  assign(d1,the_data, envir=.GlobalEnv) # print to workspace
+  
+  if(save){
+    # save to file
+    save(the_data, file=paste0("data/wunderground/",
+                               site, "_",station,"_",min(year(the_data$Time)),
+                               "-",max(year(the_data$Time)),".rda"))
+    cat("Data saved here:", "\n", getwd(),"/data/wunderground")
+  }
+  
 }
+

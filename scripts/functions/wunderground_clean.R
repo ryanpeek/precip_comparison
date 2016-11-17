@@ -6,10 +6,9 @@
 # Run "wunder_daily" script first, then feed data into this script
 
 wunder_clean <- function(data, 
-                         interval=15, # data interval in min
-                         saveHrly=FALSE, # save csv of hourly
-                         saveDaily=FALSE, # save csv of daily
-                         saveALL=FALSE) # save csv of all data
+                         saveHrly=TRUE, # save rda of hourly
+                         saveDaily=TRUE, # save rda of daily
+                         save15=TRUE) # save rda of all data
 {
   
   
@@ -17,8 +16,9 @@ wunder_clean <- function(data,
   if(!require(lubridate)) { install.packages("lubridate"); require(lubridate)}
   if(!require(dplyr)) { install.packages("dplyr"); require(dplyr)}
   
-  wdat<-bind_rows(data)
+  wdat<-data
   sta.ID<-unique(wdat$station)
+  site.ID<-unique(wdat$site)
   
   # Add other columns for processing
   wdat$year<-year(wdat$Time)
@@ -26,18 +26,6 @@ wunder_clean <- function(data,
   wdat$yday<-yday(wdat$Time)
   wdat$hour<-hour(wdat$Time)
   wdat$Time<-lubridate::with_tz(wdat$Time, tzone="America/Los_Angeles") # convert to UTC/America/Los_Angeles
-  
-  # function to snap to nearest 15 minutes
-  ## Snap to nearest 15 minute period
-  snaptime<-function(x,interval.min){
-    x <- round(as.numeric(x)/(interval*60))*(interval*60)
-    xx <- format(strptime("1970-01-01", "%Y-%m-%d", tz="UTC") + x)
-    return(xx)
-  }  
-  
-  wdat$timesnap<-ymd_hms(snaptime(wdat$Time, interval.min=interval)) # to snap to nearest 15 minutes
-  wdat$timesnap<-with_tz(wdat$timesnap, tzone="America/Los_Angeles") # convert time
-  str(wdat)
   
   # MAKE HOURLY/DAILY -------------------------------------------------------
   
@@ -50,8 +38,7 @@ wunder_clean <- function(data,
                                               hour,":00"),format = "%Y-%m-%j %H:%M"))) %>%
     select(datetime,year,mon,yday,hour,TemperatureF:Humidity) %>% 
     as.data.frame()
-  #s(wdat.hr)
-  
+
   # Make Daily dataset
   wdat.dy <- wdat %>%
     filter(TemperatureF > -999) %>% # get rid of bad temp data
@@ -59,53 +46,25 @@ wunder_clean <- function(data,
     select(TemperatureF:PressureIn,WindDirectionDegrees:Humidity) %>% 
     summarize_each(funs(mean,max,min)) %>% 
     mutate("date"=as.Date(strptime(paste0(year,"-", mon,"-", yday),format = "%Y-%m-%j"))) %>%
-    #select(date,year,mon,yday,TemperatureF:Humidity) %>%
     as.data.frame()
-  #s(wdat.dy)
-  
+
   
   # SAVE DATA ---------------------------------------------------------------
   
-  # if(!require(readr)) { install.packages("readr"); require(readr)}
-  # 
-  # # set dir
-  # locdir<-"./data/processed/wunderground"
-  # cat("\n","Use current dir to save file or choose dir? current (y) or choose (n)?", "\n\n")
-  # reply<-scan(what="character",n=1)
-  # if(reply=="y"){
-  #   ### Set directory for saving to csv
-  #   cat("Using current working directory: \n", getwd(), "\n\n")
-  # } else {
-  #   if(reply=="n"){
-  #     cat("Type path to directory you want save file: \n")
-  #     ldir<-scan(what="character",nlines = 1)
-  #     setwd(ldir)
-  #     cat("Working dir now: \n ", getwd(), "\n\n")
-  #   } else {
-  #     cat("Error: please only use 'n' or 'y'")
-  #   }
-  # }
-  # 
-  # if(saveHrly){
-  #   write_csv(wdat.hr, path=paste0(getwd(),"/",station,"_",start,"-",end,"_hr.csv"))
-  #   #saveRDS(wdat, file=paste0("./data/processed/wunderground/",station,"_",start,"-",end,"_hr.rds"))
-  #   print(paste("Hourly data saved here: \n",getwd(),sep=""))
-  # }
-  # 
-  # 
-  # if(saveDaily){
-  #   write_csv(wdat.dy, path=paste0(getwd(),"/",station,"_",start,"-",end,"_dy.csv"))
-  #   #saveRDS(wdat, file=paste0("./data/processed/wunderground/",station,"_",start,"-",end,"_dy.rds"))
-  #   print(paste("Daily data saved here: \n",getwd(),sep=""))
-  # }
-  # 
-  # 
-  # if(saveALL){
-  #   write_csv(wdat, path=paste0(getwd(),"/",station,"_",start,"-",end,".csv"))
-  #   #saveRDS(wdat, file=paste0("./data/processed/wunderground/",station,"_",start,"-",end,".rds"))
-  #   print(paste("Full dataset saved here: \n",getwd(),sep=""))
-  # }
-  
+  if(saveHrly){
+    save(wdat.hr, file=paste0("data/wunderground/",site.ID, "_",sta.ID,"_",min(wdat$year),"-",max(wdat$year),"_hr.rda"))
+    cat("Data saved here:", "\n", getwd(),"/data/wunderground")
+  }
+  if(saveDaily){
+    save(wdat.dy, file=paste0("data/wunderground/",site.ID, "_",sta.ID,"_",min(wdat$year),"-",max(wdat$year),"_dy.rda"))
+    cat("Data saved here:", "\n", getwd(),"/data/wunderground")
+  }
+
+  if(save15){
+    save(wdat, file=paste0("data/wunderground/",site.ID, "_",sta.ID,"_",min(wdat$year),"-",max(wdat$year),".rda"))
+    cat("Data saved here:", "\n", getwd(),"/data/wunderground")
+  }
+
   # PLOTS -------------------------------------------------------------------
   if(!require(ggplot2)) { install.packages("ggplot2"); require(ggplot2)}
   
@@ -115,12 +74,14 @@ wunder_clean <- function(data,
           geom_line(data=wdat.hr,aes(x=datetime,y=((DewpointF-32)/(1.8))),col="maroon", alpha=0.3)+
           xlab("") + ylab(expression(paste("Temperature (",degree,"C)")))+theme_bw()+
           ggtitle("Air Temperature (blue) and Dewpoint (maroon)"))
-  Pause()  
   
-  # add precip if you want:
-  #   ppt<-wdat[,c(1,13)]
-  #   ppt$Time<-as.Date(ppt$Time)
-  #   wdat.dy<-merge(wdat.dy, ppt, by.x="date", by.y="Time")
+  Pause <- function () { 
+    cat("Hit <enter> to continue...")
+    readline()
+    invisible()
+  }
+  
+  Pause()  
   
   # Plot the Daily 
   print(d.met<-ggplot()+
@@ -132,15 +93,16 @@ wunder_clean <- function(data,
   
   Pause()
   
-  d1<-paste0(sta.ID,"_15")
+  # assign to local/Global Environment
+  d1<-paste0(site,"_",sta.ID,"_15")
   assign(d1,wdat, envir=.GlobalEnv) # print to workspace
   
-  d2<-paste0(sta.ID,"_hr")
+  d2<-paste0(site,"_",sta.ID,"_hr")
   assign(d2,wdat.hr, envir=.GlobalEnv) # print to workspace
   
-  d3<-paste0(sta.ID,"_dy")
+  d3<-paste0(site,"_",sta.ID,"_dy")
   assign(d3,wdat.dy, envir=.GlobalEnv) # print to workspace
   
   cat("All finished... data in current environment \n")
-  
+  rm(wdat.dy, wdat.hr)
 }  
