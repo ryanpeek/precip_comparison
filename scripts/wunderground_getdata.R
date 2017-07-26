@@ -25,10 +25,10 @@ source("scripts/functions/wunderground_clean.R") # clean data
 # PICK STATION AND DATES --------------------------------------------------
 
 ## These will be appended on to file names
-site <- 'RUB' # site name
-station<-'KCAFORES14' # station name here
-start<-'2016-11-05' # this took user: 87.844 system: 11.139 elapsed: 2565.785
-end<-'2016-11-15'
+site <- 'NFA' # site name
+station<-'KCAGOLDR3' # station name here
+start<-'2015-03-01' # this took user: 87.844 system: 11.139 elapsed: 2565.785
+end<-'2016-07-30'
 
 # SCRAPE WUNDERGROUND DATA ------------------------------------------------
 
@@ -39,7 +39,7 @@ library(lubridate, warn.conflicts = F)
 
 ptm <- proc.time() # total time to run
 wdat <- map_df(seq(as.Date(start), as.Date(end), "1 day"),
-              function(x) { wunder_daily(station = station, date = x) })
+              function(x) { wunder_daily(site = site, station = station, date = x) })
 proc.time() - ptm # total time that has elapsed
 
 
