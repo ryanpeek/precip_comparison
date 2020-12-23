@@ -1,12 +1,12 @@
 # GET UCD CLIMATE 
 
-# climate data from UC Climate (http://169.237.140.1/calludt.cgi/WXDATAREPORT)
+# climate data from UC Climate (http://ipm.ucanr.edu/WEATHER/index.html)
 # http://apps.atm.ucdavis.edu/wxdata/data/
 
 library(lubridate); library(dplyr); library(ggplot2); library(stringr)
 
 # get historical climate data
-dav <- read.csv("./data/climate_Davis_historical.csv", skip = 53)
+dav <- read.csv("data/climate_Davis_historical_1970_2020.csv", skip = 55)
 dav %<>% 
   select(Station:min,Soil.max, min.1) %>% 
   filter(!is.na(Air.max))
@@ -49,7 +49,8 @@ head(ppt)
 
 # precip in FEB
 ggplot(data = ppt, aes(x = as.factor(Y), y = avgPPT_mm, group=Y)) +
-  geom_crossbar(data= ppt, aes(x=as.factor(Y), ymax=maxPPT_mm, ymin=minPPT_mm, group=as.factor(Y)), alpha= 0.5, color="red2")+
+  geom_crossbar(data= ppt, aes(x=as.factor(Y), ymax=maxPPT_mm, ymin=minPPT_mm, group=as.factor(Y)), alpha= 0.5, color="red2") +
+  theme_bw()+
   #geom_point(data=ppt[ppt$Y==2016,], aes(x=as.factor(Y), y=maxPPT_mm, group=as.factor(Y)), fill="blue", alpha=0.7) + theme_bw() +
   facet_grid(M~.)
 
@@ -69,16 +70,15 @@ ggplot(data = ppt, aes(x = as.factor(Y), y = totPPT_mm, group=Y)) +
              aes(label=Y, x=as.factor(Y), y=totPPT_mm), size=3, vjust = -0.90, nudge_y=-0.5, fontface = "bold")+
   ylab(paste("Total Precipitation (mm)")) + theme_bw() + xlab("") +
   theme(axis.text.x = element_text(angle = 90, vjust = 0.5)) + 
-  ggtitle(label = "February Precip (mm) in Davis: 1981-2016") + 
+  ggtitle(label = "February Precip (mm) in Davis: 1971-2020") + 
   annotate("text", x=as.factor(2008), y=290, size=2, label="Data Source: http://atm.ucdavis.edu/weather/")
 
-library(svglite) # much higher res and is vector scalable graphics
-#ggsave(filename = "./plots/Feb_ppt_Davis_1981-2016.svg", width = 8, height=5, units = "in", dpi = 150)
+ggsave(filename = "figs/Feb_ppt_Davis_1971-2020.png", width = 8, height=5, units = "in", dpi = 300)
 
 
 # airtemp in FEB
 ggplot(data = dav1, aes(x = as.factor(Y), y = Air.max, group=Station)) +
-  geom_jitter(data=dav1[dav1$Y==2016,], aes(x=as.factor(Y), y=Air.max, group=Y), color="maroon", alpha=0.8) +
+  geom_jitter(data=dav1[dav1$Y==2020,], aes(x=as.factor(Y), y=Air.max, group=Y), color="maroon", alpha=0.8) +
   geom_boxplot(data= dav1, aes(x=as.factor(Y), ymax=Air.max, ymin=min, group=Y), color="gray20", alpha=0.7)+
   geom_boxplot(data=dav1[dav1$Y==2016,], aes(x=as.factor(Y), ymax=Air.max, ymin=min, group=Y), fill="maroon", alpha=0.7) +
   geom_boxplot(data=dav1[dav1$Y==1983,], aes(x=as.factor(Y), ymax=Air.max, ymin=min, group=Y), fill="maroon", alpha=0.7) +
@@ -90,11 +90,10 @@ ggplot(data = dav1, aes(x = as.factor(Y), y = Air.max, group=Station)) +
   geom_smooth(data=dav1, aes(x=as.factor(Y), y= Air.max, group=Station)) +
   ylab(expression(paste("Air Temp (", degree, "C)"))) + theme_bw() + xlab("") +
   theme(axis.text.x = element_text(angle = 90, vjust = 0.5)) + 
-  ggtitle(label = "February Air Temperature in Davis: 1981-2016") + 
+  ggtitle(label = "February Air Temperature in Davis: 1971-2020") + 
   annotate("text", x=as.factor(2010), y=2, size=2, label="Data Source: http://atm.ucdavis.edu/weather/")
 
-# ggsave(filename = "./plots/Feb_airtemp_Davis_1981-2016.svg", width = 8, height=5, units = "in", dpi = 150)
-# ggsave(filename = "./plots/Feb_airtemp_Davis_1981-2016.png", width = 6, height=5, units = "in", dpi = 150)
+ggsave(filename = "figs/Feb_airtemp_Davis_1971-2020.png", width = 8, height=6, units = "in", dpi = 300)
 
 # air only for all but 2016, J-F-M
 dav %>% 
@@ -120,3 +119,4 @@ oneway_test(totPPT_mm ~ decade,data=ppt,distribution='approximate')
 
 # monte carlo sampling of Air.max vs decade using FEB only
 oneway_test(Air.max ~ decade,data=dav1[dav1$M==2,],distribution='approximate')
+
