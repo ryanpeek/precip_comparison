@@ -2,8 +2,10 @@
 
 # climate data from UC Climate (http://ipm.ucanr.edu/WEATHER/index.html)
 # http://apps.atm.ucdavis.edu/wxdata/data/
-
-library(lubridate); library(dplyr); library(ggplot2); library(stringr)
+library(tidyverse)
+library(lubridate); 
+library(stringr)
+library(glue)
 
 # get historical climate data
 dav <- read.csv("data/climate_Davis_historical_1970_2020.csv", skip = 55)
