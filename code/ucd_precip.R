@@ -2,9 +2,9 @@
 
 # pull data from UC Davis site:
 # climate data from UC Climate (http://ipm.ucanr.edu/WEATHER/index.html)
-
+# http://ipm.ucanr.edu/calludt.cgi/WXSTATIONDATA?MAP=&STN=DAVIS.T
 # Archived Data: http://apps.atm.ucdavis.edu/wxdata/data/
-
+# crosswalk: http://apps.atm.ucdavis.edu/wxdata/metadata/sensor_info_by_id.txt
 
 # Libraries ---------------------------------------------------------------
 
@@ -13,13 +13,39 @@ library(lubridate)
 library(stringr)
 library(glue)
 library(janitor)
-
+library(purrr)
+library(glue)
 
 # Get Data ----------------------------------------------------------------
 
+# get metdata
+metadat <- read_csv("data/sensor_info_by_id.csv")
+(filenames <- metadat$metric_id)
+(filenames_ct <- filenames[grepl("^CT", filenames)])
+# stations: 
+# 1 | Russell Ranch  ("RR")
+# 2 | Campbell Tract ("CT")
+
+# download_files
+download_dav_weather <- function(){
+  map(filenames_ct, 
+      ~download.file(
+        url = glue("http://apps.atm.ucdavis.edu/wxdata/data/{.x}.zip"), 
+        destfile = glue("data/{.x}.csv.zip")))
+  print("Done!")
+}
+
+download_dav_weather()
+
+
+# get data
+ppt <- read_csv("data/CT_Rain_mm.csv.zip", col_names = c("station_id", "sensor_id","datetime", "value"))
+
+temp <- read_csv("data/CT_Ta2m.csv.zip", col_names = c("station_id", "sensor_id","datetime", "value"))
+
 # get historical climate data
-dav <- read_csv("data/climate_Davis_historical_1970_2020.csv", skip = 55) %>% 
-  clean_names() %>% 
+dav <- read_csv("data/climate_Davis_historical_1980_2021.csv", skip = 63) %>% 
+  clean_names() #%>% 
   # select cols
   select(station:precip, air_max:min, evap, solar) %>% 
   # drop one NA
