@@ -2,7 +2,7 @@
 #### RYAN PEEK, 2016, 
 #### CENTER FOR WATERSHED SCIENCES UC DAVIS
 
-get.CDEC<-function( # Function to pull CDEC data
+f_get_CDEC<-function( # Function to pull CDEC data
   station,  # Station is 3 letter abbreviation
   duration, # Duration is E=event, D=Daily, H=Hourly
   sensor,   # sensor is number, see below
