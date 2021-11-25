@@ -16,48 +16,54 @@ library(janitor)
 library(purrr)
 library(glue)
 
-# Get Data ----------------------------------------------------------------
+# Download Data ----------------------------------------------------------------
 
-# get metdata
-metadat <- read_csv("data/sensor_info_by_id.csv")
+# source functions
+source("code/functions/f_download_davis_clim.R")
+source("code/functions/f_get_sensor_metadata_davis_clim.R")
+# download all data:
+# f_download_dav_weather()
+# download metadata
+# f_get_sensor_metadata_davis_clim()
+
+# get metadata
+metadat <- read_csv("data_raw/sensor_info_by_id.csv")
 (filenames <- metadat$metric_id)
-(filenames_ct <- filenames[grepl("^CT", filenames)])
 # stations: 
 # 1 | Russell Ranch  ("RR")
 # 2 | Campbell Tract ("CT")
+(filenames_ct <- filenames[grepl("^CT", filenames)])
 
-# download_files
-download_dav_weather <- function(){
-  map(filenames_ct, 
-      ~download.file(
-        url = glue("http://apps.atm.ucdavis.edu/wxdata/data/{.x}.zip"), 
-        destfile = glue("data/{.x}.csv.zip")))
-  print("Done!")
-}
-
-download_dav_weather()
-
+# Import Data ------------------------------------------------------
 
 # get data
-ppt <- read_csv("data/CT_Rain_mm.csv.zip", col_names = c("station_id", "sensor_id","datetime", "value"))
+alldat <- map(filenames_ct, ~read_csv(glue("data_raw/{.x}.csv.zip"), 
+                            col_names = c("station_id", "sensor_id",
+                                          "datetime", "value"), 
+                            id = "filename")) %>% 
+  bind_rows
 
-temp <- read_csv("data/CT_Ta2m.csv.zip", col_names = c("station_id", "sensor_id","datetime", "value"))
+# join by sensor id
+alldat <- left_join(alldat, metadat)
 
-# get historical climate data
-dav <- read_csv("data/climate_Davis_historical_1980_2021.csv", skip = 63) %>% 
-  clean_names() #%>% 
+# Get Summarized Data -----------------------------------------------------
+
+# get historical climate data: daily
+dav1980 <- read_csv("data/climate_Davis_historical_1980_2021.csv", skip = 63) %>%
+  clean_names() %>% 
+  remove_empty() %>% 
   # select cols
-  select(station:precip, air_max:min, evap, solar) %>% 
+  select(station:precip, air_max:min_7, soil_max, min_15, evap, solar) %>% 
   # drop one NA
   filter(!is.na(date))
 
-#summary(dav)
+summary(dav1980)
 
 
 # Clean Data --------------------------------------------------------------
 
 # need to clean and fix time & date
-dav <- dav %>% 
+dav <- dav1980 %>% 
   mutate(time = ifelse(nchar(time) < 4, str_pad(time, side = "left", width = 4, pad="0"),  time),
          datetime = ymd_hm(paste0(as.character(date), time)), .after=date,
          M = month(datetime))
@@ -81,8 +87,8 @@ dav_feb <- dav %>%
             "minPPT_mm"=min(precip),
             "avgAir_max"=mean(air_max),
             "maxAir_max"=max(air_max),
-            "avgAir_min"=mean(min),
-            "minAir_min"=min(min))
+            "avgAir_min"=mean(min_7),
+            "minAir_min"=min(min_7))
 
 # add decade
 dav_feb$decade <- cut(x = dav_feb$WY, 
@@ -116,10 +122,10 @@ ggplot(data = dav_feb, aes(x = as.factor(WY), y = totPPT_mm, group=WY)) +
              aes(label=WY, x=as.factor(WY), y=totPPT_mm), size=3, vjust = -0.90, nudge_y=-0.5, fontface = "bold")+
   ylab(paste("Total Precipitation (mm)")) + theme_bw() + xlab("") +
   theme(axis.text.x = element_text(angle = 90, vjust = 0.5)) + 
-  ggtitle(label = "February Precip (mm) in Davis: 1971-2020") + 
-  annotate("text", x=as.factor(2008), y=290, size=2, label="Data Source: http://atm.ucdavis.edu/weather/")
+  labs(title = "February Precip (mm) in Davis: 1971-2020",
+       caption = "Data Source: http://atm.ucdavis.edu/weather/")
 
-ggsave(filename = "figs/Feb_ppt_Davis_1971-2020.png", width = 8, height=5, units = "in", dpi = 300)
+# ggsave(filename = "figs/Feb_ppt_Davis_1971-2020.png", width = 8, height=5, units = "in", dpi = 300)
 
 
 # Plot Feb Airtemp --------------------------------------------------------
@@ -129,16 +135,16 @@ ggplot() +
   geom_point(data=dav_feb, aes(x=WY, y=avgAir_max, group=WY), color="maroon", alpha=0.8) +
   geom_ribbon(data=dav_feb, aes(x=WY, ymax=avgAir_max, ymin=avgAir_min, group=WY), color="gray20", alpha=0.7)+
   geom_smooth(data=dav_feb, aes(x=WY, y= avgAir_max)) +
-  theme(axis.text.x = element_text(angle = 90, vjust = 0.5)) + 
-  labs(title = "February Air Temperature in Davis: 1971-2020", caption="Data Source: http://atm.ucdavis.edu/weather/", 
+  ylim(c(50,70))+
+  #theme(axis.text.x = element_text(angle = 90, vjust = 0.5)) + 
+  labs(title = "February Air Temperature in Davis: 1971-2021", caption="Data Source: http://atm.ucdavis.edu/weather/", 
        x="", y=expression(paste("Air Temp (", degree, "C)")))+
   theme_bw()
 
-ggsave(filename = "figs/Feb_airtemp_Davis_1971-2020.png", width = 8, height=6, units = "in", dpi = 300)
+ggsave(filename = "figs/Feb_airtemp_Davis_1971-2021.png", width = 8, height=6, units = "in", dpi = 300)
 
 # do some stats by decade to look for changes in ppt
 library(coin) 
-head(dav_feb)
 
 # monte carlo sampling of precip vs decade using FEB only
 oneway_test(totPPT_mm ~ decade,
