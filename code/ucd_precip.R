@@ -49,11 +49,11 @@ alldat <- left_join(alldat, metadat)
 # Get Summarized Data -----------------------------------------------------
 
 # get historical climate data: daily
-dav1980 <- read_csv("data/climate_Davis_historical_1980_2021.csv", skip = 63) %>%
+dav1980 <- read_csv("data_raw/climate_Davis_historical_1980_2021.csv", skip = 63) %>%
   clean_names() %>% 
   remove_empty() %>% 
   # select cols
-  select(station:precip, air_max:min_7, soil_max, min_15, evap, solar) %>% 
+  select(station:precip, air_max, air_min=min_7, evap, solar) %>% 
   # drop one NA
   filter(!is.na(date))
 
@@ -79,16 +79,16 @@ dav$decade <- cut(x = dav$WY,
 
 # clean 
 dav_feb <- dav %>% 
-  group_by(WY, M) %>% 
   filter(M==2) %>% # limit to FEB 
+  group_by(WY, M) %>% 
   summarize("totPPT_mm"=sum(precip),
             "avgPPT_mm"=mean(precip),
             "maxPPT_mm"=max(precip),
             "minPPT_mm"=min(precip),
             "avgAir_max"=mean(air_max),
             "maxAir_max"=max(air_max),
-            "avgAir_min"=mean(min_7),
-            "minAir_min"=min(min_7))
+            "avgAir_min"=mean(air_min),
+            "minAir_min"=min(air_min))
 
 # add decade
 dav_feb$decade <- cut(x = dav_feb$WY, 
@@ -101,9 +101,9 @@ dav_feb$decade <- cut(x = dav_feb$WY,
 
 # precip in FEB
 ggplot() +
-  geom_crossbar(data=dav_feb, aes(x=WY, y=avgPPT_mm, ymax=maxPPT_mm, ymin=minPPT_mm, group=WY), alpha= 0.5, color="cyan4") +
-  theme_bw() +
-  facet_grid(M~.)
+  geom_crossbar(data=dav_feb, aes(x=WY, y=avgPPT_mm, ymax=maxPPT_mm, ymin=minPPT_mm, group=WY), alpha= 0.5, fill="cyan4") +
+  theme_bw()
+  #facet_grid(M~.)
 
 # precip plot
 ggplot(data = dav_feb, aes(x = as.factor(WY), y = totPPT_mm, group=WY)) +
@@ -117,8 +117,9 @@ ggplot(data = dav_feb, aes(x = as.factor(WY), y = totPPT_mm, group=WY)) +
   geom_point(data=dav_feb[dav_feb$WY==1988,], aes(x=as.factor(WY),y=totPPT_mm, group=WY), pch=21, fill="lightpink", size=4) +
   geom_point(data=dav_feb[dav_feb$WY==1992,], aes(x=as.factor(WY),y=totPPT_mm, group=WY), pch=21, fill="lightpink", size=4) +
   geom_point(data=dav_feb[dav_feb$WY==2003,], aes(x=as.factor(WY),y=totPPT_mm, group=WY), pch=21, fill="lightpink", size=4) +
+  geom_point(data=dav_feb[dav_feb$WY==2019,], aes(x=as.factor(WY),y=totPPT_mm, group=WY), pch=21, fill="maroon", size=4) +
   geom_point(data=dav_feb[dav_feb$WY==2010,], aes(x=as.factor(WY),y=totPPT_mm, group=WY), pch=21, fill="lightpink", size=4) +
-  geom_text(data=dav_feb[dav_feb$WY==2016 | dav_feb$WY==1983 | dav_feb$WY==1988 | dav_feb$WY==1998 | dav_feb$WY==1992 | dav_feb$WY==2003 | dav_feb$WY==2010 | dav_feb$WY==2017,], 
+  geom_text(data=dav_feb[dav_feb$WY==2019 |dav_feb$WY==2016 | dav_feb$WY==1983 | dav_feb$WY==1988 | dav_feb$WY==1998 | dav_feb$WY==1992 | dav_feb$WY==2003 | dav_feb$WY==2010 | dav_feb$WY==2017,], 
              aes(label=WY, x=as.factor(WY), y=totPPT_mm), size=3, vjust = -0.90, nudge_y=-0.5, fontface = "bold")+
   ylab(paste("Total Precipitation (mm)")) + theme_bw() + xlab("") +
   theme(axis.text.x = element_text(angle = 90, vjust = 0.5)) + 
@@ -137,11 +138,11 @@ ggplot() +
   geom_smooth(data=dav_feb, aes(x=WY, y= avgAir_max)) +
   ylim(c(50,70))+
   #theme(axis.text.x = element_text(angle = 90, vjust = 0.5)) + 
-  labs(title = "February Air Temperature in Davis: 1971-2021", caption="Data Source: http://atm.ucdavis.edu/weather/", 
+  labs(title = "February Air Temperature in Davis: 1981-2021", caption="Data Source: http://atm.ucdavis.edu/weather/", 
        x="", y=expression(paste("Air Temp (", degree, "C)")))+
   theme_bw()
 
-ggsave(filename = "figs/Feb_airtemp_Davis_1971-2021.png", width = 8, height=6, units = "in", dpi = 300)
+ggsave(filename = "figs/Feb_airtemp_Davis_1981-2021.png", width = 8, height=6, units = "in", dpi = 300)
 
 # do some stats by decade to look for changes in ppt
 library(coin) 

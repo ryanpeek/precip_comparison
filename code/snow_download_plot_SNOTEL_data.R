@@ -1,8 +1,13 @@
 # Read NRCS SNOTEL climate data from website in tab delimited format
 
-
+library(tidyverse)
 # read data table from the NRCS SNOTEL site
-data <- read.table("http://www.wcc.nrcs.usda.gov/ftpref/data/snow/snotel/cards/california/20h02s_all.txt", header=T ,sep="\t")	
+# snotel metadata: 
+# https://www.wcc.nrcs.usda.gov/ftpref/data/water/wcs/gis/data/sntl_data.readme
+snotel_meta <- read_delim("https://www.wcc.nrcs.usda.gov/ftpref/data/water/wcs/gis/data/sntl_data.readme",delim = ": ", skip = 10, trim_ws = TRUE,
+                          col_names = c("col_number", "metric_name", "metric_detail"))
+
+data <- read.table("https://www.wcc.nrcs.usda.gov/ftpref/data/water/wcs/gis/data/sntl_data.csv", header=T ,sep="\t")	
 
 w <- colnames(data)
 sitename <- substr(w[1], 1, nchar(w[1])-5)
