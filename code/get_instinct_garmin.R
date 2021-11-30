@@ -30,7 +30,7 @@ most_rec <- fs::dir_info(instinct_dir, glob="*.fit") %>%
   # slice_head(n=2)
 
 # read in
-df <- FITfileR::readFitFile(most_rec$path[2])
+df <- FITfileR::readFitFile(most_rec$path[1])
 df
 
 # get loc/timestamps
@@ -55,5 +55,17 @@ df_sf <- df_all %>%
 mapview(df_sf, zcol="distance_mi", layer.name="Distance (mi)") +
   mapview(df_sf, zcol="enhanced_speed", layer.name="Speed") 
   
+# look at average
+df_sf <- df_sf %>% 
+  mutate(hr_60 = zoo::rollmean(heart_rate, k = 60, fill = NA),
+         hr_zone = cut(heart_rate, breaks = seq(60,180,10)))
 
-
+# look at HR
+library(ggplot2)
+ggplot(df_sf) + 
+  geom_point(aes(x = timestamp, y = heart_rate, fill = hr_zone), 
+             pch=21, color="gray40", alpha=0.8, size=3) +
+  scale_fill_viridis_d("HR Zone", option = "A") +
+  #scale_fill_brewer(palette = "PRGn") +
+  geom_line(aes(x=timestamp, y=hr_60), color="gray80", lwd=1.5, alpha=0.8) +
+  theme_classic()
