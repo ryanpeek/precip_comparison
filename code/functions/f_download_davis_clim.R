@@ -5,7 +5,7 @@ library(dplyr)
 library(glue)
 
 
-f_download_dav_weather <- function(outdir="data_raw"){
+f_download_dav_clim <- function(outdir="data_raw"){
   
   # get metadata
     metadat <- read_delim("http://apps.atm.ucdavis.edu/wxdata/metadata/sensor_info_by_id.txt", trim_ws = TRUE,
