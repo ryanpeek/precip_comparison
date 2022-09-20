@@ -27,3 +27,5 @@ photos/
 
 # snakemake
 .snakemake
+
+data_raw/*zip
