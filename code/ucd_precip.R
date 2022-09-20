@@ -20,9 +20,9 @@ library(glue)
 
 # source functions
 source("code/functions/f_download_davis_clim.R")
-source("code/functions/f_get_sensor_metadata_davis_clim.R")
+source("code/functions/f_get_metadata_davis_clim.R")
 # download all data:
-# f_download_dav_weather()
+f_download_dav_clim()
 # download metadata
 # f_get_sensor_metadata_davis_clim()
 
@@ -49,9 +49,9 @@ alldat <- left_join(alldat, metadat)
 # Get Summarized Data -----------------------------------------------------
 
 # get historical climate data: daily
-dav1980 <- read_csv("data_raw/climate_Davis_historical_1980_2021.csv", skip = 63) %>%
-  clean_names() %>% 
-  remove_empty() %>% 
+dav1980 <- read_csv("data_raw/davis_daily_historical_1980_2021.csv", skip = 63) %>%
+  janitor::clean_names() %>% 
+  janitor::remove_empty(which = "cols") %>% 
   # select cols
   select(station:precip, air_max, air_min=min_7, evap, solar) %>% 
   # drop one NA
@@ -123,7 +123,7 @@ ggplot(data = dav_feb, aes(x = as.factor(WY), y = totPPT_mm, group=WY)) +
              aes(label=WY, x=as.factor(WY), y=totPPT_mm), size=3, vjust = -0.90, nudge_y=-0.5, fontface = "bold")+
   ylab(paste("Total Precipitation (mm)")) + theme_bw() + xlab("") +
   theme(axis.text.x = element_text(angle = 90, vjust = 0.5)) + 
-  labs(title = "February Precip (mm) in Davis: 1971-2020",
+  labs(title = "February Precip (mm) in Davis: 1971-2021",
        caption = "Data Source: http://atm.ucdavis.edu/weather/")
 
 # ggsave(filename = "figs/Feb_ppt_Davis_1971-2020.png", width = 8, height=5, units = "in", dpi = 300)
@@ -142,7 +142,7 @@ ggplot() +
        x="", y=expression(paste("Air Temp (", degree, "C)")))+
   theme_bw()
 
-ggsave(filename = "figs/Feb_airtemp_Davis_1981-2021.png", width = 8, height=6, units = "in", dpi = 300)
+#ggsave(filename = "figs/Feb_airtemp_Davis_1981-2021.png", width = 8, height=6, units = "in", dpi = 300)
 
 # do some stats by decade to look for changes in ppt
 library(coin) 
